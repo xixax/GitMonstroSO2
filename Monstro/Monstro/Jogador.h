@@ -11,6 +11,4 @@ typedef struct Jogador{
 	int posy;
 }Jogador;
 
-void ConstrutorJogador(Jogador *j);
-
 //funçoes de construçao do jogador e comandos do jogador

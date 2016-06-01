@@ -27,8 +27,8 @@
 
 //vida
 #define VidaJogador 10
-#define VidaMonstroDistraido 5
-#define VidaMonstroBully 5
+#define VidaMonstroDistraido 10
+#define VidaMonstroBully 10
 
 //objectos
 #define VidaVitaminas 1 //dá 1 de vida

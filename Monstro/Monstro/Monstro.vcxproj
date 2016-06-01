@@ -76,6 +76,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Jogo.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Monstro.c" />
   </ItemGroup>
