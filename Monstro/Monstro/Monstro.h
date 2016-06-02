@@ -10,6 +10,7 @@ typedef struct Monstro{
 
 	int N;//saber quanto é que o distraido anda ate poder virar de direcao, recebida por argumentos
 	int sentido;//0-cima 1-baixo 2-esquerda 3-direita
+	int clonado;//0 para original, 1 para clone
 
 	//posicao
 	int posx;
@@ -20,8 +21,8 @@ typedef struct Monstro{
 void InicializaMonstro(Monstro *monstro);
 
 //funcoes mexe monstro
-void mexeDistraido(Monstro *monstro,Jogo *j);
-void mexeBully(Monstro *monstro,Jogo *j);
+void mexeDistraido(Monstro *monstro, Mapa *m);
+void mexeBully(Monstro *monstro, Mapa *m);
 
 //funcoes ataca monstro
-void atacaMonstro(Monstro *monstro,Jogo *j);//tira um ponto de saude para si ate aos 16
+void atacaMonstro(Monstro *monstro, Mapa *m);//tira um ponto de saude para si ate aos 16
