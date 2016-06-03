@@ -5,6 +5,15 @@
 
 void JogaMonstro(int argc, LPTSTR argv[]){
 
+
+#ifdef UNICODE
+	_setmode(_fileno(stdin), _O_TEXT);
+	_setmode(_fileno(stdout), _O_TEXT);
+	_setmode(_fileno(stderr), _O_TEXT);
+#endif
+
+	_tprintf(TEXT("Argumentos : %d %d %d %d %d"), argv[0], argv[1], argv[2], argv[3], argv[4]);
+
 	Jogo jogo;
 
 	Monstro monstro;//
@@ -21,7 +30,6 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 	while (jogo.jogocomecou == 1){
 		//if poder se mexer
 		if (monstro.tipo == 0){
-			//funcao mexedistraido
 			mexeDistraido(&monstro, jogo.mapa);
 		}
 		else{
