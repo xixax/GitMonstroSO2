@@ -14,3 +14,6 @@ typedef struct Jogos{
 
 
 void JogaMonstro(int argc,LPTSTR argv[]);
+void mexeDistraido(Monstro *monstro, Mapa *m);
+void mexeBully(Monstro *monstro, Mapa *m);
+void atacaMonstro(Monstro *monstro, Mapa *m);

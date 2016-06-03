@@ -1,7 +1,6 @@
 #include "Main.h"
 
 
-
 typedef struct Monstro{
 	int tipo;  //0-distraido(anda ao calhas), 1-Bully
 
@@ -15,14 +14,8 @@ typedef struct Monstro{
 	//posicao
 	int posx;
 	int posy;
-
 }Monstro;
 
+
+
 void InicializaMonstro(Monstro *monstro);
-
-//funcoes mexe monstro
-void mexeDistraido(Monstro *monstro, Mapa *m);
-void mexeBully(Monstro *monstro, Mapa *m);
-
-//funcoes ataca monstro
-void atacaMonstro(Monstro *monstro, Mapa *m);//tira um ponto de saude para si ate aos 16
