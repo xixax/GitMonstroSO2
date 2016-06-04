@@ -1,6 +1,6 @@
 #include "MemoriaPartilhada.h"
 
-//criar variavel global que endique quando e que pode andar, esta vai ser mudada numa thread atenta a isso
+#define MAX 256
 
 void JogaMonstro(int argc, LPTSTR argv[]){
 	HANDLE hMapFile;
@@ -12,7 +12,7 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 	_setmode(_fileno(stderr), _O_TEXT);
 #endif
 
-	_tprintf(TEXT("Argumentos : %d %d %d %d %d"), atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), atoi(argv[3]), atoi(argv[4]));
+	_tprintf(TEXT("Argumentos : %d %d %d"), atoi(argv[0]), atoi(argv[1]), atoi(argv[2]));
 
 
 	//teste memoria partilhada
@@ -26,7 +26,7 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 		exit(-1);
 	}
 	
-	mp = (MemoriaPartilhada*)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(MemoriaPartilhada));
+	mp = (MemoriaPartilhada*)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 70*70*sizeof(MemoriaPartilhada));
 	
 	if (mp == NULL){
 		_tprintf(TEXT("ERRO 2"));
@@ -35,32 +35,26 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 		exit(-1);
 	}
 	
-	_tprintf(TEXT("Memoria partilhada jogador 0 vida:%d"), mp->jogador.vida);
-	while (1){
-	}
-
-	/*
 	Monstro monstro;//
-	monstro.tipo = argv[0];//isto nao deve estar correto
-	monstro.posx = argv[1];
-	monstro.posy = argv[2];//ver se ele ja me manda uma posicao sem parede, ou se vejo aqui
-	monstro.N = argv[3];
-	monstro.clonado = argv[4];//se e um clone de outro monstro, ou se e o inicial
-	InicializaMonstro(&monstro);
-
-	//criar thread que indica se pode andar ou nao
+	monstro.tipo = atoi(argv[0]);//isto nao deve estar correto
+	monstro.N = atoi(argv[1]);
+	monstro.clonado = atoi(argv[2]);//se e um clone de outro monstro, ou se e o inicial
+	InicializaMonstro(&monstro,&mp);
 
 	//aqui já temos de ter o jogo partilhado, os array de ponteiros do jogador, e o handle Mutex
-	while (jogo.jogocomecou == 1){
+	while (1){
 		//if poder se mexer
 		if (monstro.tipo == 0){
-			mexeDistraido(&monstro, jogo.mapa);
+			mexeDistraido(&monstro, &mp);
 		}
 		else{
-			mexeBully(&monstro, jogo.mapa);
+			mexeBully(&monstro, &mp);
 		}
-		atacaMonstro(&monstro, jogo.mapa);
-	}*/
+		atacaMonstro(&monstro, &mp);
+		//fazer aqui um sleep para a lentidao
+		Sleep((1000 / monstro.lentidao));
+		_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\n",monstro.posx,monstro.posy));
+	}
 
 }
 
@@ -85,35 +79,43 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 
 
 //funcoes mexe monstro
-void mexeDistraido(Monstro *monstro, Mapa *m){
+void mexeDistraido(Monstro *monstro, MemoriaPartilhada *mp){
 	if (Nmonstro == 1){
 		srand(time(NULL));
 		if (monstro->sentido == 0){//validacao para cima
-			if (m[(monstro->posx - 1) * 70 + monstro->posy].muro == 0){//x-1 cima
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx - 1) * 70 + monstro->posy].monstro = monstro;
+			if (mp[(monstro->posx - 1) * 70 + monstro->posy].muro == 0){//x-1 cima
+				WaitForSingleObject(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx - 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx - 1;
+				ReleaseMutex(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex);
 			}
 		}
 		if (monstro->sentido == 1){//validacao para baixo
-			if (m[(monstro->posx + 1) * 70 + monstro->posy].muro == 0){//x+1 baixo
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx + 1) * 70 + monstro->posy].monstro = monstro;
+			if (mp[(monstro->posx + 1) * 70 + monstro->posy].muro == 0){//x+1 baixo
+				WaitForSingleObject(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx + 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx + 1;
+				ReleaseMutex(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex);
 			}
 		}
 		if (monstro->sentido == 2){//validacao para esquerda
-			if (m[(monstro->posx) * 70 + monstro->posy - 1].muro == 0){//y-1 é para a esquerda
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx) * 70 + monstro->posy - 1].monstro = monstro;
+			if (mp[(monstro->posx) * 70 + monstro->posy - 1].muro == 0){//y-1 é para a esquerda
+				WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy - 1].monstro,*monstro);
 				monstro->posy = monstro->posy - 1;
+				ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex);
 			}
 		}
 		if (monstro->sentido == 3){//validacao para direita
-			if (m[(monstro->posx) * 70 + monstro->posy + 1].muro == 0){//y+1 é para a direita
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx) * 70 + monstro->posy + 1].monstro = monstro;
+			if (mp[(monstro->posx) * 70 + monstro->posy + 1].muro == 0){//y+1 é para a direita
+				WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy + 1].monstro, *monstro);
 				monstro->posy = monstro->posy + 1;
+				ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex);
 			}
 		}
 		//fazer aqui mudanca de sentido
@@ -122,82 +124,117 @@ void mexeDistraido(Monstro *monstro, Mapa *m){
 	}
 	else{
 		if (monstro->sentido == 0){//validacao para cima
-			if (m[(monstro->posx - 1) * 70 + monstro->posy].muro == 0){//x-1 cima
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx - 1) * 70 + monstro->posy].monstro = monstro;
+			if (mp[(monstro->posx - 1) * 70 + monstro->posy].muro == 0){//x-1 cima
+				WaitForSingleObject(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx - 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx - 1;
+				ReleaseMutex(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex);
 			}
 		}
 		if (monstro->sentido == 1){//validacao para baixo
-			if (m[(monstro->posx + 1) * 70 + monstro->posy].muro == 0){//x+1 baixo
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx + 1) * 70 + monstro->posy].monstro = monstro;
+			if (mp[(monstro->posx + 1) * 70 + monstro->posy].muro == 0){//x+1 baixo
+				WaitForSingleObject(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx + 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx + 1;
+				ReleaseMutex(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex);
 			}
 		}
 		if (monstro->sentido == 2){//validacao para esquerda
-			if (m[(monstro->posx) * 70 + monstro->posy - 1].muro == 0){//y-1 é para a esquerda
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx) * 70 + monstro->posy - 1].monstro = monstro;
+			if (mp[(monstro->posx) * 70 + monstro->posy - 1].muro == 0){//y-1 é para a esquerda
+				WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy - 1].monstro, *monstro);
 				monstro->posy = monstro->posy - 1;
+				ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex);
 			}
 		}
 		if (monstro->sentido == 3){//validacao para direita
-			if (m[(monstro->posx) * 70 + monstro->posy + 1].muro == 0){//y+1 é para a direita
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx) * 70 + monstro->posy + 1].monstro = monstro;
+			if (mp[(monstro->posx) * 70 + monstro->posy + 1].muro == 0){//y+1 é para a direita
+				WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy + 1].monstro, *monstro);
 				monstro->posy = monstro->posy + 1;
+				ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex);
 			}
 		}
 		Nmonstro = Nmonstro - 1;
 	}
 }
-void mexeBully(Monstro *monstro, Mapa *m){
+void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 	//validacao do campo de visao=7, se tiver algum jogador vai atras dele
 	//ver se consigo partilhar a memoria do array de jogadores, seria muito mais facil
-	int i, diftotal, diftotalmin = 14, pos = -1;
-	for (i = 0; i < 10; i++){//pesquisa dos jogadores mais perto
-		if (jogadores[i] != NULL){
-			diftotal = 100;
-			int auxX = jogadores[i]->posx - monstro->posx;
-			if (auxX < 0){
-				auxX = auxX*-1;
-			}
-			int auxY = jogadores[i]->posy - monstro->posy;
-			if (auxY < 0){
-				auxY = auxY*-1;
-			}
-			diftotal = auxX + auxY;
-			if (diftotal < diftotalmin){
-				diftotalmin = diftotal;
-				pos = i;
+	int x,y, diftotalX=0,diftotalY=0, diftotalmin = 14,auxdiftotalX,auxdiftotalY;
+	//ver o jogador mais perto e ter com ele
+	for (x = -13; x < 14; x++){
+		for (y = -13; y < 14; y++){
+			auxdiftotalX = 0;
+			auxdiftotalY = 0;
+			if (mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.vida>-1){
+				auxdiftotalX = mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.posx - monstro->posx;
+				auxdiftotalY = mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.posy - monstro->posy;
+				if (auxdiftotalX < 0 && auxdiftotalY < 0){
+					if ((auxdiftotalX + auxdiftotalY)*(-1) < diftotalmin){
+						diftotalmin = (auxdiftotalX + auxdiftotalY)*(-1);
+						diftotalX = auxdiftotalX;
+						diftotalY = auxdiftotalY;
+					}
+				}
+				else{
+					if (auxdiftotalX < 0){
+						if ((auxdiftotalX*(-1) + auxdiftotalY) < diftotalmin){
+							diftotalmin = (auxdiftotalX*(-1) + auxdiftotalY);
+							diftotalX = auxdiftotalX;
+							diftotalY = auxdiftotalY;
+						}
+					}
+					else{
+						if (auxdiftotalY < 0){
+							if ((auxdiftotalX + auxdiftotalY*(-1)) < diftotalmin){
+								diftotalmin = (auxdiftotalX + auxdiftotalY*(-1));
+								diftotalX = auxdiftotalX;
+								diftotalY = auxdiftotalY;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
 
-	if (pos >= 0){
-		if ((monstro->posx - jogadores[i]->posx) < 0 && m[(monstro->posx - 1) * 70 + monstro->posy].muro == 0){//x-1 cima
-			m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-			m[(monstro->posx - 1) * 70 + monstro->posy].monstro = monstro;
+
+	if (diftotalX != 0 || diftotalY!=0){
+		if (mp[(monstro->posx - 1) * 70 + monstro->posy].muro == 0 && diftotalX<0){//x-1 cima
+			WaitForSingleObject(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex, INFINITE);
+			inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+			copiaMonstro(&mp[(monstro->posx - 1) * 70 + monstro->posy].monstro, *monstro);
 			monstro->posx = monstro->posx - 1;
+			ReleaseMutex(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex);
 		}
 		else{
-			if ((monstro->posx - jogadores[i]->posx) > 0 && m[(monstro->posx + 1) * 70 + monstro->posy].muro == 0){//x+1 baixo
-				m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-				m[(monstro->posx + 1) * 70 + monstro->posy].monstro = monstro;
+			if (mp[(monstro->posx + 1) * 70 + monstro->posy].muro == 0 && diftotalX>0){//x+1 baixo
+				WaitForSingleObject(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex, INFINITE);
+				inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+				copiaMonstro(&mp[(monstro->posx + 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx + 1;
+				ReleaseMutex(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex);
 			}
 			else{
-				if ((monstro->posy - jogadores[i]->posy) < 0 && m[(monstro->posx) * 70 + monstro->posy - 1].muro == 0){//y-1 é para a esquerda
-					m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-					m[(monstro->posx) * 70 + monstro->posy - 1].monstro = monstro;
+				if (mp[(monstro->posx) * 70 + monstro->posy - 1].muro == 0 && diftotalY<0){//y-1 é para a esquerda
+					WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex, INFINITE);
+					inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+					copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy - 1].monstro, *monstro);
 					monstro->posy = monstro->posy - 1;
+					ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex);
 				}
 				else{
-					if ((monstro->posy - jogadores[i]->posy) > 0 && m[(monstro->posx) * 70 + monstro->posy + 1].muro == 0){//y+1 é para a direita
-						m[(monstro->posx) * 70 + monstro->posy].monstro = NULL;
-						m[(monstro->posx) * 70 + monstro->posy + 1].monstro = monstro;
+					if (mp[(monstro->posx) * 70 + monstro->posy + 1].muro == 0 && diftotalY>0){//y+1 é para a direita
+						WaitForSingleObject(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex, INFINITE);
+						inicializaMonstroNull(&mp[(monstro->posx) * 70 + monstro->posy].monstro);
+						copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy + 1].monstro, *monstro);
 						monstro->posy = monstro->posy + 1;
+						ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex);
 					}
 				}
 			}
@@ -208,14 +245,29 @@ void mexeBully(Monstro *monstro, Mapa *m){
 
 //funcoes ataca monstro
 //tira um ponto de saude para si ate aos 16
-void atacaMonstro(Monstro *monstro, Mapa *m){
-	if (m[(monstro->posx) * 70 + monstro->posy].jogador != NULL){
-		m[(monstro->posx) * 70 + monstro->posy].jogador->vida = m[(monstro->posx) * 70 + monstro->posy].jogador->vida - 1;
+void atacaMonstro(Monstro *monstro, MemoriaPartilhada *mp){
+	TCHAR buf[TAM], executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
+	TCHAR argumentos[MAX];
+	if (monstro->tipo == 0){
+		argumentos[MAX] = TEXT("0 3 1");
+	}
+	else{
+		argumentos[MAX] = TEXT("1 3 1");
+	}
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	if (mp[(monstro->posx) * 70 + monstro->posy].jogador.vida>-1){
+		mp[(monstro->posx) * 70 + monstro->posy].jogador.vida = mp[(monstro->posx) * 70 + monstro->posy].jogador.vida - 1;
 		monstro->vida = monstro->vida + 1;
 
 		//fazer aqui a condição, se for 16 a vida, começa um novo processo mosntro
 		if (monstro->vida == 16){
 			//cria novo monstro com 8 de vida
+			ZeroMemory(&si, sizeof(STARTUPINFO));
+			si.cb = sizeof(STARTUPINFO);
+			if (CreateProcess(executavel, argumentos, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+			}
 			monstro->vida = 8;
 		}
 	}

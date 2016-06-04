@@ -18,4 +18,5 @@ typedef struct Monstro{
 
 
 
-void InicializaMonstro(Monstro *monstro);
+void inicializaMonstroNull(Monstro *m);
+void copiaMonstro(Monstro *m1, Monstro m2);

@@ -78,6 +78,7 @@
   <ItemGroup>
     <ClCompile Include="Jogo.c" />
     <ClCompile Include="Main.c" />
+    <ClCompile Include="MemoriaPartilhada.c" />
     <ClCompile Include="Monstro.c" />
   </ItemGroup>
   <ItemGroup>

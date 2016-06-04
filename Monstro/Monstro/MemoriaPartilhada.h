@@ -20,5 +20,8 @@ typedef struct MemoriaPartilhada{
 	HANDLE hmutex;
 }MemoriaPartilhada;
 
+
+void InicializaMonstro(Monstro *monstro,MemoriaPartilhada *mp);
+
 //memoria a ser partilhada
 //falta passar o mutex
