@@ -19,6 +19,10 @@ void InicializaMonstro(Monstro *monstro,MemoriaPartilhada *mp){
 	}
 	Nmonstro = monstro->N;
 
+
+	srand(time(NULL));
+	auxX = 0;
+	auxY = 0;
 	do{
 		auxX = rand() % 70;//0 a 69
 		auxY = rand() % 70;//0 a 69

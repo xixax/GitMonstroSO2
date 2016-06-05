@@ -14,7 +14,6 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 
 	_tprintf(TEXT("Argumentos : %d %d %d"), atoi(argv[0]), atoi(argv[1]), atoi(argv[2]));
 
-
 	//teste memoria partilhada
 	hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, "TrabalhoSO");
 	//nome do mapfile qualquer
@@ -39,21 +38,22 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 	monstro.tipo = atoi(argv[0]);//isto nao deve estar correto
 	monstro.N = atoi(argv[1]);
 	monstro.clonado = atoi(argv[2]);//se e um clone de outro monstro, ou se e o inicial
-	InicializaMonstro(&monstro,&mp);
+	InicializaMonstro(&monstro,mp);
+	_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\n"), monstro.posx, monstro.posy);
 
 	//aqui já temos de ter o jogo partilhado, os array de ponteiros do jogador, e o handle Mutex
-	while (1){
+	while (mp!=NULL){
 		//if poder se mexer
 		if (monstro.tipo == 0){
-			mexeDistraido(&monstro, &mp);
+			mexeDistraido(&monstro, mp);
 		}
 		else{
-			mexeBully(&monstro, &mp);
+			mexeBully(&monstro, mp);
 		}
-		atacaMonstro(&monstro, &mp);
+		atacaMonstro(&monstro, mp);
 		//fazer aqui um sleep para a lentidao
 		Sleep((1000 / monstro.lentidao));
-		_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\n",monstro.posx,monstro.posy));
+		_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\n"), monstro.posx, monstro.posy);
 	}
 
 }
@@ -80,6 +80,9 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 
 //funcoes mexe monstro
 void mexeDistraido(Monstro *monstro, MemoriaPartilhada *mp){
+	int xAntigo, yAntigo;
+	xAntigo = monstro->posx;
+	yAntigo = monstro->posy;
 	if (Nmonstro == 1){
 		srand(time(NULL));
 		if (monstro->sentido == 0){//validacao para cima
@@ -161,11 +164,16 @@ void mexeDistraido(Monstro *monstro, MemoriaPartilhada *mp){
 		}
 		Nmonstro = Nmonstro - 1;
 	}
+
+	inicializaMonstroNull(&mp[(xAntigo)* 70 + yAntigo].monstro);
 }
 void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 	//validacao do campo de visao=7, se tiver algum jogador vai atras dele
 	//ver se consigo partilhar a memoria do array de jogadores, seria muito mais facil
 	int x,y, diftotalX=0,diftotalY=0, diftotalmin = 14,auxdiftotalX,auxdiftotalY;
+	int xAntigo, yAntigo;
+	xAntigo = monstro->posx;
+	yAntigo = monstro->posy;
 	//ver o jogador mais perto e ter com ele
 	for (x = -13; x < 14; x++){
 		for (y = -13; y < 14; y++){
@@ -239,7 +247,7 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 				}
 			}
 		}
-
+		inicializaMonstroNull(&mp[(xAntigo)* 70 + yAntigo].monstro);
 	}
 }
 
@@ -249,10 +257,10 @@ void atacaMonstro(Monstro *monstro, MemoriaPartilhada *mp){
 	TCHAR buf[TAM], executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
 	TCHAR argumentos[MAX];
 	if (monstro->tipo == 0){
-		argumentos[MAX] = TEXT("0 3 1");
+		_tcscpy(argumentos, TEXT("0 3 1"));
 	}
 	else{
-		argumentos[MAX] = TEXT("1 3 1");
+		_tcscpy(argumentos, TEXT("1 3 1"));
 	}
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
