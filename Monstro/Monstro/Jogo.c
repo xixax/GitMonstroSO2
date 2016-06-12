@@ -45,6 +45,7 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 	while (mp!=NULL){
 		//if poder se mexer
 		if (monstro.tipo == 0){
+			_tprintf(TEXT("Entrou!\n"));
 			mexeDistraido(&monstro, mp);
 		}
 		else{
@@ -53,7 +54,7 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 		atacaMonstro(&monstro, mp);
 		//fazer aqui um sleep para a lentidao
 		Sleep((1000 / monstro.lentidao));
-		_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\n"), monstro.posx, monstro.posy);
+		_tprintf(TEXT("\nMonstro\nPosx:%d\nPosy:%d\nTIPO:%d\n"), monstro.posx, monstro.posy,monstro.tipo);
 	}
 
 }
@@ -80,9 +81,6 @@ void JogaMonstro(int argc, LPTSTR argv[]){
 
 //funcoes mexe monstro
 void mexeDistraido(Monstro *monstro, MemoriaPartilhada *mp){
-	int xAntigo, yAntigo;
-	xAntigo = monstro->posx;
-	yAntigo = monstro->posy;
 	if (Nmonstro == 1){
 		srand(time(NULL));
 		if (monstro->sentido == 0){//validacao para cima
@@ -164,8 +162,6 @@ void mexeDistraido(Monstro *monstro, MemoriaPartilhada *mp){
 		}
 		Nmonstro = Nmonstro - 1;
 	}
-
-	inicializaMonstroNull(&mp[(xAntigo)* 70 + yAntigo].monstro);
 }
 void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 	//validacao do campo de visao=7, se tiver algum jogador vai atras dele

@@ -19,6 +19,6 @@ void copiaMonstro(Monstro *m1, Monstro m2){
 	m1->posx = m2.posx;
 	m1->posy = m2.posy;
 	m1->sentido = m2.sentido;
-	m1->tipo = m2.sentido;
+	m1->tipo = m2.tipo;
 	m1->vida = m2.vida;
 }
