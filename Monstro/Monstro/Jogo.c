@@ -167,17 +167,14 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 	//validacao do campo de visao=7, se tiver algum jogador vai atras dele
 	//ver se consigo partilhar a memoria do array de jogadores, seria muito mais facil
 	int x,y, diftotalX=0,diftotalY=0, diftotalmin = 14,auxdiftotalX,auxdiftotalY;
-	int xAntigo, yAntigo;
-	xAntigo = monstro->posx;
-	yAntigo = monstro->posy;
 	//ver o jogador mais perto e ter com ele
-	for (x = -13; x < 14; x++){
-		for (y = -13; y < 14; y++){
+	for (x = -3; x < 3; x++){
+		for (y = -3; y < 13; y++){
 			auxdiftotalX = 0;
 			auxdiftotalY = 0;
-			if (mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.vida>-1){
-				auxdiftotalX = mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.posx - monstro->posx;
-				auxdiftotalY = mp[(monstro->posx - 1) * 70 + monstro->posy].jogador.posy - monstro->posy;
+			if (mp[(monstro->posx+x) * 70 + monstro->posy+y].jogador.vida>-1){
+				auxdiftotalX = mp[((monstro->posx + x)) * 70 + monstro->posy + y].jogador.posx - monstro->posx;
+				auxdiftotalY = mp[((monstro->posx + x)) * 70 + monstro->posy + y].jogador.posy - monstro->posy;
 				if (auxdiftotalX < 0 && auxdiftotalY < 0){
 					if ((auxdiftotalX + auxdiftotalY)*(-1) < diftotalmin){
 						diftotalmin = (auxdiftotalX + auxdiftotalY)*(-1);
@@ -207,7 +204,7 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 		}
 	}
 
-
+	
 	if (diftotalX != 0 || diftotalY!=0){
 		if (mp[(monstro->posx - 1) * 70 + monstro->posy].muro == 0 && diftotalX<0){//x-1 cima
 			WaitForSingleObject(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex, INFINITE);
@@ -215,6 +212,7 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 			copiaMonstro(&mp[(monstro->posx - 1) * 70 + monstro->posy].monstro, *monstro);
 			monstro->posx = monstro->posx - 1;
 			ReleaseMutex(mp[(monstro->posx - 1) * 70 + monstro->posy].hmutex);
+			_tprintf(TEXT("ENCONTROUUUUUUU!!!!!!!"));
 		}
 		else{
 			if (mp[(monstro->posx + 1) * 70 + monstro->posy].muro == 0 && diftotalX>0){//x+1 baixo
@@ -223,6 +221,7 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 				copiaMonstro(&mp[(monstro->posx + 1) * 70 + monstro->posy].monstro, *monstro);
 				monstro->posx = monstro->posx + 1;
 				ReleaseMutex(mp[(monstro->posx + 1) * 70 + monstro->posy].hmutex);
+				_tprintf(TEXT("ENCONTROUUUUUUU!!!!!!!"));
 			}
 			else{
 				if (mp[(monstro->posx) * 70 + monstro->posy - 1].muro == 0 && diftotalY<0){//y-1 é para a esquerda
@@ -231,6 +230,7 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 					copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy - 1].monstro, *monstro);
 					monstro->posy = monstro->posy - 1;
 					ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy - 1].hmutex);
+					_tprintf(TEXT("ENCONTROUUUUUUU!!!!!!!"));
 				}
 				else{
 					if (mp[(monstro->posx) * 70 + monstro->posy + 1].muro == 0 && diftotalY>0){//y+1 é para a direita
@@ -239,11 +239,11 @@ void mexeBully(Monstro *monstro, MemoriaPartilhada *mp){
 						copiaMonstro(&mp[(monstro->posx) * 70 + monstro->posy + 1].monstro, *monstro);
 						monstro->posy = monstro->posy + 1;
 						ReleaseMutex(mp[(monstro->posx) * 70 + monstro->posy + 1].hmutex);
+						_tprintf(TEXT("ENCONTROUUUUUUU!!!!!!!"));
 					}
 				}
 			}
 		}
-		inicializaMonstroNull(&mp[(xAntigo)* 70 + yAntigo].monstro);
 	}
 }
 
